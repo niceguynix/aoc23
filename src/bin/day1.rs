@@ -16,9 +16,7 @@ fn digit_in_letters(string: &str) -> Option<u32> {
         "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
     ];
     for (idx, i) in digits.iter().enumerate() {
-        let size = std::cmp::min(i.len(), string.len());
-        if &string[..size] == *i {
-            // println!("comparison    {i} {/}",&string);
+        if string.starts_with(i) {
             return Some(idx as u32 + 1);
         }
     }
@@ -43,7 +41,7 @@ fn part2(input: &str) -> u32 {
                     .or(digit_in_letters(&line[(line.len() - 1 - idx)..]))
             })
             .unwrap();
-
+        // println!("{line} {f}{l}");
         let t = f * 10 + l;
         s += t;
     }
@@ -59,13 +57,14 @@ fn main() {
     };
 
     let input = include_str!("../inputs/day1/input.txt");
+    let before = std::time::Instant::now();
     let result = match part.as_str() {
         "part1" => part1(input),
         "part2" => part2(input),
         _ => panic!("Specify one of 2 parts"),
     };
 
-    println!("The result is {result}");
+    println!("The result is {result} duration:{:?}",before.elapsed());
 }
 
 #[cfg(test)]
