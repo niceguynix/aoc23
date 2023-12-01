@@ -11,7 +11,7 @@ fn part1(input: &str) -> u32 {
     s
 }
 
-fn digit_in_letters(string: &str) -> i32 {
+fn digit_in_letters(string: &str) -> Option<u32> {
     let digits = [
         "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
     ];
@@ -19,51 +19,31 @@ fn digit_in_letters(string: &str) -> i32 {
         let size = std::cmp::min(i.len(), string.len());
         if &string[..size] == *i {
             // println!("comparison    {i} {/}",&string);
-            return idx as i32 + 1;
+            return Some(idx as u32 + 1);
         }
     }
-    -1
+    None
 }
 
 fn part2(input: &str) -> u32 {
     let mut s = 0;
     for line in input.lines() {
-        let mut f = 0;
-        let mut l = 0;
-        for (index, c) in line.chars().enumerate() {
-            match c.to_digit(10) {
-                Some(d) => {
-                    f = d;
-                    break;
-                }
-                None => (),
-            }
-            match digit_in_letters(&line[index..]) {
-                -1 => (),
-                x => {
-                    f = x as u32;
-                    break;
-                }
-            }
-        }
+        let f = line
+            .chars()
+            .enumerate()
+            .find_map(|(idx, c)| c.to_digit(10).or(digit_in_letters(&line[idx..])))
+            .unwrap();
 
-        for (index, c) in line.chars().rev().enumerate() {
-            // println!("{}",line.len()-index-1);
-            match c.to_digit(10) {
-                Some(d) => {
-                    l = d;
-                    break;
-                }
-                None => (),
-            }
-            match digit_in_letters(&line[(line.len() - index - 1)..]) {
-                -1 => (),
-                x => {
-                    l = x as u32;
-                    break;
-                }
-            }
-        }
+        let l = line
+            .chars()
+            .rev()
+            .enumerate()
+            .find_map(|(idx, c)| {
+                c.to_digit(10)
+                    .or(digit_in_letters(&line[(line.len() - 1 - idx)..]))
+            })
+            .unwrap();
+
         let t = f * 10 + l;
         s += t;
     }
