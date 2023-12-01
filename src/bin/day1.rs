@@ -2,26 +2,8 @@ fn part1(input: &str) -> u32 {
     let mut s = 0;
 
     for i in input.lines() {
-        let mut f = 0;
-        let mut l = 0;
-        for j in i.chars() {
-            match j.to_digit(10) {
-                Some(d) => {
-                    f = d;
-                    break;
-                }
-                None => continue,
-            }
-        }
-        for j in i.chars().rev() {
-            match j.to_digit(10) {
-                Some(d) => {
-                    l = d;
-                    break;
-                }
-                None => continue,
-            }
-        }
+        let f = i.chars().find_map(|x| x.to_digit(10)).unwrap();
+        let l = i.chars().rev().find_map(|x| x.to_digit(10)).unwrap();
         let t = f * 10 + l;
         s += t;
     }
