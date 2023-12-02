@@ -64,7 +64,7 @@ fn main() {
         _ => panic!("Specify one of 2 parts"),
     };
 
-    println!("The result is {result} duration:{:?}",before.elapsed());
+    println!("The result is {result} duration:{:?}", before.elapsed());
 }
 
 #[cfg(test)]
