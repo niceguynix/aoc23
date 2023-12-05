@@ -1,22 +1,34 @@
 use std::collections::HashSet;
 
+fn process_input(input: &str) -> (&str, &str) {
+    let cards_1 = input.split_once(':').unwrap().1;
+    cards_1.split_once('|').unwrap()
+}
+
+fn get_winning_cards<'a>(own_cards: &'a str, winning_cards: &'a str) -> HashSet<&'a str> {
+    let own_cards = own_cards
+        .trim()
+        .split(' ')
+        .filter(|x| !x.is_empty())
+        .collect::<HashSet<_>>();
+    let winning_cards = winning_cards
+        .trim()
+        .split(' ')
+        .filter(|x| !x.is_empty())
+        .collect::<HashSet<_>>();
+    own_cards
+        .intersection(&winning_cards)
+        .map(|x| *x)
+        .collect::<HashSet<&str>>()
+}
+
 fn part1(input: &str) -> u32 {
     let mut sum = 0;
     for i in input.split('\n') {
-        let cards_1 = i.split_once(':').unwrap().1;
-        let (winning_cards, own_cards) = cards_1.split_once('|').unwrap();
-        let own_cards = own_cards
-            .trim()
-            .split(' ')
-            .filter(|x| !x.is_empty())
-            .collect::<HashSet<_>>();
-        let winning_cards = winning_cards
-            .trim()
-            .split(' ')
-            .filter(|x| !x.is_empty())
-            .collect::<HashSet<_>>();
-
-        let no_of_winning_cards = own_cards.intersection(&winning_cards).count();
+        let processed_input = process_input(i);
+        let no_of_winning_cards = get_winning_cards(processed_input.0, processed_input.1)
+            .iter()
+            .count();
 
         if no_of_winning_cards == 0 {
             continue;
@@ -34,20 +46,10 @@ fn part2(input: &str) -> u32 {
         arr.push(1);
     }
     for (idx, i) in input.split('\n').enumerate() {
-        let cards_1 = i.split_once(':').unwrap().1;
-        let (winning_cards, own_cards) = cards_1.split_once('|').unwrap();
-        let own_cards = own_cards
-            .trim()
-            .split(' ')
-            .filter(|x| !x.is_empty())
-            .collect::<HashSet<_>>();
-        let winning_cards = winning_cards
-            .trim()
-            .split(' ')
-            .filter(|x| !x.is_empty())
-            .collect::<HashSet<_>>();
-
-        let no_of_won_cards = own_cards.intersection(&winning_cards).count();
+        let processed_input = process_input(i);
+        let no_of_won_cards = get_winning_cards(processed_input.0, processed_input.1)
+            .iter()
+            .count();
         for i in idx + 1..=idx + no_of_won_cards {
             arr[i] += arr[idx];
         }
