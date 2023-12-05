@@ -81,7 +81,7 @@ impl Mapper {
 
     fn convert_single_seed(&self, soil: &mut u64) {
         for x in &self.ranges {
-            if x.source.contains(&soil) {
+            if x.source.contains(soil) {
                 *soil = x.destination.start() + *soil - x.source.start();
                 return;
             }
@@ -178,13 +178,13 @@ fn map_range(
     // println!("{t:?}");
     // println!("Ayo wtf {c} {}",u64::MAX);
 
-    let x=t.clone().iter().fold(0, |p,(c,_)| {
-        let t=c.clone().count() as u128;
+    let x = t.clone().iter().fold(0, |p, (c, _)| {
+        let t = c.clone().count() as u128;
         // println!("{t}");
-        p+t
+        p + t
     });
-    if x!=u64::MAX as u128{
-        println!("Ayo wtf {ranges:?} {src:?} {c} {}",u64::MAX);
+    if x != u64::MAX as u128 {
+        println!("Ayo wtf {ranges:?} {src:?} {c} {}", u64::MAX);
         panic!();
     }
 
@@ -212,7 +212,7 @@ fn part2(input: &str) -> u64 {
         .filter_map(|x| x.parse().ok())
         .collect::<Vec<u64>>();
 
-    let seeds = soils.chunks_exact(2).flat_map(|x| {
+    let _seeds = soils.chunks_exact(2).flat_map(|x| {
         println!("{x:?}");
         x[0]..x[0] + x[1]
     });
@@ -236,7 +236,7 @@ fn part2(input: &str) -> u64 {
     //     t
     // });
 
-    let mut ranges = vec![(0..=u64::MAX-1, false)];
+    let mut ranges = vec![(0..=u64::MAX - 1, false)];
 
     let mut c = 0;
     for i in mappers.iter() {
@@ -287,33 +287,30 @@ fn part2(input: &str) -> u64 {
     // });
     // println!("{ranges:?}");
 
-    let mut ranges=ranges.into_iter().flat_map(|(r,_)|{
-        r
-    });
+    let mut ranges = ranges.into_iter().flat_map(|(r, _)| r);
 
-    let mut soil2=Vec::new();
-    for i in soils.chunks_exact(2){
-        soil2.push((i[0],i[1]));
+    let mut soil2 = Vec::new();
+    for i in soils.chunks_exact(2) {
+        soil2.push((i[0], i[1]));
     }
-    
+
     soil2.sort_by_key(|x| x.0);
 
-    let mut c=0;
-    let locations=soil2.iter().flat_map(|(s,l)|{
-        let mut x=vec![];
-        let t=s-c;
-        for i in 0..t{
-            c+=1;
+    let mut c = 0;
+    let locations = soil2.iter().flat_map(|(s, l)| {
+        let mut x = vec![];
+        let t = s - c;
+        for _i in 0..t {
+            c += 1;
             ranges.next();
         }
 
-        for i in 0..*l{
-            c+=1;
+        for _i in 0..*l {
+            c += 1;
             x.push(ranges.next().unwrap());
         }
 
-        x        
-        
+        x
     });
     locations.min().unwrap()
     // 0
