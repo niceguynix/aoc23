@@ -17,7 +17,8 @@ fn get_winning_cards<'a>(own_cards: &'a str, winning_cards: &'a str) -> HashSet<
         .filter(|x| !x.is_empty())
         .collect::<HashSet<_>>();
     own_cards
-        .intersection(&winning_cards).copied()
+        .intersection(&winning_cards)
+        .copied()
         .collect::<HashSet<&str>>()
 }
 

@@ -1,9 +1,10 @@
-
+use core::panic;
+use std::ops::{Not, RangeInclusive};
 
 #[derive(Debug)]
 struct MapRange {
-    source: std::ops::Range<u64>,
-    destination: std::ops::Range<u64>,
+    source: std::ops::RangeInclusive<u64>,
+    destination: std::ops::RangeInclusive<u64>,
 }
 
 impl TryFrom<&str> for MapRange {
@@ -26,8 +27,8 @@ impl TryFrom<&str> for MapRange {
         let range_length: u64 = parseInput(value.next())?;
 
         Ok(Self {
-            source: (source_start..(source_start + range_length + 1)),
-            destination: (destination_start..destination_start + range_length + 1),
+            source: (source_start..=(source_start + range_length - 1)),
+            destination: (destination_start..=destination_start + range_length - 1),
         })
     }
 }
@@ -68,7 +69,7 @@ impl Mapper {
                     .iter()
                     .filter_map(|c| {
                         match c.source.contains(x) {
-                            true => Some(c.destination.start + *x - c.source.start),
+                            true => Some(c.destination.start() + *x - c.source.start()),
                             false => None, // println!("{x}");
                         }
                     })
@@ -76,6 +77,15 @@ impl Mapper {
                     .get_or_insert(*x);
             })
             .count();
+    }
+
+    fn convert_single_seed(&self, soil: &mut u64) {
+        for x in &self.ranges {
+            if x.source.contains(&soil) {
+                *soil = x.destination.start() + *soil - x.source.start();
+                return;
+            }
+        }
     }
 }
 
@@ -91,7 +101,7 @@ fn part1(input: &str) -> u64 {
         .filter_map(|x| x.parse().ok())
         .collect::<Vec<u64>>();
 
-    println!("{soils:?}");
+    // println!("{soils:?}");
     let _t = sections
         .map(|c| {
             let t = Mapper::try_from(c).unwrap();
@@ -99,9 +109,95 @@ fn part1(input: &str) -> u64 {
             // println!("{t:?}");
         })
         .collect::<Vec<_>>();
-    println!("{soils:?}");
+    // println!("{soils:?}");
 
     *soils.iter().min().unwrap()
+}
+
+fn map_range(
+    ranges: Vec<(RangeInclusive<u64>, bool)>,
+    src: RangeInclusive<u64>,
+    dest: RangeInclusive<u64>,
+) -> Vec<(RangeInclusive<u64>, bool)> {
+    let mut t = Vec::new();
+
+    let mut m = false;
+    let mut c = 0_u128;
+    for (i, updated) in ranges.clone() {
+        m = false;
+        if updated {
+            t.push((i, true));
+            continue;
+        }
+        if i.start() < src.start() && i.end() > src.end() {
+            m = true;
+            t.push((*i.start()..=(src.start() - 1), false));
+            c += t.last().unwrap().0.clone().count() as u128;
+            t.push((dest.clone(), true));
+            c += t.last().unwrap().0.clone().count() as u128;
+            t.push(((*src.end() + 1)..=*i.end(), false));
+            c += t.last().unwrap().0.clone().count() as u128;
+        }
+
+        if i.start() == src.start() && i.end() == src.end() {
+            t.push((dest.clone(), true));
+            c += t.last().unwrap().0.clone().count() as u128;
+            m = true;
+        }
+
+        if src.start() < i.start() && src.end() > i.end() {
+            m = true;
+            let tstart = dest.start() + (i.start() - src.start());
+            let tend = dest.end() - (src.end() - i.end());
+            t.push((tstart..=tend, true));
+            c += t.last().unwrap().0.clone().count() as u128;
+        }
+
+        if src.end() < i.end() && src.start() <= i.start() && src.end() >= i.start() {
+            m = true;
+            let tstart = dest.start() + (i.start() - src.start());
+            t.push((tstart..=*dest.end(), true));
+            c += t.last().unwrap().0.clone().count() as u128;
+            t.push(((src.end() + 1)..=*i.end(), false));
+            c += t.last().unwrap().0.clone().count() as u128;
+        }
+
+        if src.end() >= i.end() && src.start() > i.start() && src.start() <= i.end() {
+            m = true;
+            let tend = dest.end() - (src.end() - i.end());
+            t.push((*i.start()..=*src.start() - 1, false));
+            c += t.last().unwrap().0.clone().count() as u128;
+            t.push((*dest.start()..=tend, true));
+            c += t.last().unwrap().0.clone().count() as u128;
+        }
+        if m.not() {
+            t.push((i, false));
+        }
+    }
+    // println!("\n\n\nHere\n\n\n");
+    // println!("{t:?}");
+    // println!("Ayo wtf {c} {}",u64::MAX);
+
+    let x=t.clone().iter().fold(0, |p,(c,_)| {
+        let t=c.clone().count() as u128;
+        // println!("{t}");
+        p+t
+    });
+    if x!=u64::MAX as u128{
+        println!("Ayo wtf {ranges:?} {src:?} {c} {}",u64::MAX);
+        panic!();
+    }
+
+    t.iter()
+        .map(|x| {
+            if x.0.start() > x.0.end() {
+                println!("{:?}", x.0);
+                panic!("fuck");
+            }
+
+            x.clone()
+        })
+        .collect()
 }
 
 fn part2(input: &str) -> u64 {
@@ -116,7 +212,7 @@ fn part2(input: &str) -> u64 {
         .filter_map(|x| x.parse().ok())
         .collect::<Vec<u64>>();
 
-    let soils = soils.chunks_exact(2).flat_map(|x| {
+    let seeds = soils.chunks_exact(2).flat_map(|x| {
         println!("{x:?}");
         x[0]..x[0] + x[1]
     });
@@ -127,14 +223,100 @@ fn part2(input: &str) -> u64 {
         .unwrap();
     println!("{soils:?}");
 
-    let soils = soils.map(|x| {
-        let mut t = vec![x];
-        // println!("{x}");
-        mappers.iter().map(|x| x.convert_seeds(&mut t)).count();
-        *t.first().unwrap()
+    // let seeds = soils.map(|x| {
+    //     // let mut t = vec![x];
+    //     // mappers.iter().map(|x| x.convert_seeds(&mut t)).count();
+    //     // *t.first().unwrap()
+    //     let mut t = x;
+    //     mappers
+    //         .iter()
+    //         .map(|m| m.convert_single_seed(&mut t))
+    //         .count();
+    //     // println!("{x} {t}");
+    //     t
+    // });
+
+    let mut ranges = vec![(0..=u64::MAX-1, false)];
+
+    let mut c = 0;
+    for i in mappers.iter() {
+        for z in ranges.iter_mut() {
+            z.1 = false;
+        }
+        println!("hello");
+        // println!("{ranges:?}");
+        for r in &i.ranges {
+            ranges = map_range(ranges, r.source.clone(), r.destination.clone());
+            if c == 3 {
+                // panic!();
+            }
+        }
+        c += 1;
+    }
+
+    // println!("{ranges:?}");
+
+    // let locations = seeds
+    //     .map(|x| {
+    //         let mut cur = 0;
+    //         for (i, _) in &ranges {
+    //             let t= i.clone().count() as u64;
+    //             if x >= cur && x <= cur + t- 1 {
+    //                 let z=i.start() + (x - cur);
+    //                 // println!("{z} {x}");
+    //                 return z;
+    //             }
+    //             cur+=t;
+    //         }
+    //         return 0;
+    //     })
+    //     ;
+
+    // let mut c = 0;
+    // for (i, _) in ranges {
+    //     c += i.clone().count() as u128;
+    //     // println!("{i:?} {c}");
+    // }
+
+    // println!("{locations:?}");
+    // let x = ranges.iter().fold(0_u128, |prev,cur|
+    //     let t= &cur.0.clone().count();
+
+    //     return prev+ *t as u128;
+
+    // });
+    // println!("{ranges:?}");
+
+    let mut ranges=ranges.into_iter().flat_map(|(r,_)|{
+        r
     });
 
-    soils.min().unwrap()
+    let mut soil2=Vec::new();
+    for i in soils.chunks_exact(2){
+        soil2.push((i[0],i[1]));
+    }
+    
+    soil2.sort_by_key(|x| x.0);
+
+    let mut c=0;
+    let locations=soil2.iter().flat_map(|(s,l)|{
+        let mut x=vec![];
+        let t=s-c;
+        for i in 0..t{
+            c+=1;
+            ranges.next();
+        }
+
+        for i in 0..*l{
+            c+=1;
+            x.push(ranges.next().unwrap());
+        }
+
+        x        
+        
+    });
+    locations.min().unwrap()
+    // 0
 }
 
 fn main() {
