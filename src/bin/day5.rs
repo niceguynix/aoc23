@@ -1,4 +1,4 @@
-use std::fmt::Error;
+
 
 #[derive(Debug)]
 struct MapRange {
@@ -42,13 +42,13 @@ impl TryFrom<&str> for Mapper {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let mut lines = value.lines();
-        let map_name = lines.next();
+        let _map_name = lines.next();
         let ranges: Result<_, _> = lines
             .map(|c| {
                 let t = MapRange::try_from(c);
                 match t {
                     Ok(maprange) => Ok(maprange),
-                    Err(err) => return Err::<_, Self::Error>(err.into()),
+                    Err(err) => Err::<_, Self::Error>(err),
                 }
             })
             .collect();
@@ -92,7 +92,7 @@ fn part1(input: &str) -> u64 {
         .collect::<Vec<u64>>();
 
     println!("{soils:?}");
-    let t = sections
+    let _t = sections
         .map(|c| {
             let t = Mapper::try_from(c).unwrap();
             t.convert_seeds(&mut soils);
@@ -106,7 +106,7 @@ fn part1(input: &str) -> u64 {
 
 fn part2(input: &str) -> u64 {
     let mut sections = input.split("\r\n\r\n");
-    let mut soils = sections
+    let soils = sections
         .next()
         .unwrap()
         .split_once(": ")
@@ -116,21 +116,22 @@ fn part2(input: &str) -> u64 {
         .filter_map(|x| x.parse().ok())
         .collect::<Vec<u64>>();
 
-    let mut soils= soils
-        .chunks_exact(2)
-        .flat_map(|x| {
-            println!("{x:?}");
-            (x[0]..x[0] + x[1]).into_iter()
-        });
+    let soils = soils.chunks_exact(2).flat_map(|x| {
+        println!("{x:?}");
+        x[0]..x[0] + x[1]
+    });
 
-    let mappers:Vec<_> = sections.map(|x| Mapper::try_from(x)).into_iter().collect::<Result<_,_>>().unwrap();
+    let mappers: Vec<_> = sections
+        .map(Mapper::try_from)
+        .collect::<Result<_, _>>()
+        .unwrap();
     println!("{soils:?}");
 
     let soils = soils.map(|x| {
-        let mut t=vec![x];
+        let mut t = vec![x];
         // println!("{x}");
         mappers.iter().map(|x| x.convert_seeds(&mut t)).count();
-        t.iter().next().unwrap().clone()
+        *t.first().unwrap()
     });
 
     soils.min().unwrap()

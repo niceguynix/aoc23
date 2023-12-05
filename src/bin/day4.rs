@@ -17,8 +17,7 @@ fn get_winning_cards<'a>(own_cards: &'a str, winning_cards: &'a str) -> HashSet<
         .filter(|x| !x.is_empty())
         .collect::<HashSet<_>>();
     own_cards
-        .intersection(&winning_cards)
-        .map(|x| *x)
+        .intersection(&winning_cards).copied()
         .collect::<HashSet<&str>>()
 }
 
@@ -26,9 +25,7 @@ fn part1(input: &str) -> u32 {
     let mut sum = 0;
     for i in input.split('\n') {
         let processed_input = process_input(i);
-        let no_of_winning_cards = get_winning_cards(processed_input.0, processed_input.1)
-            .iter()
-            .count();
+        let no_of_winning_cards = get_winning_cards(processed_input.0, processed_input.1).len();
 
         if no_of_winning_cards == 0 {
             continue;
@@ -47,9 +44,7 @@ fn part2(input: &str) -> u32 {
     }
     for (idx, i) in input.split('\n').enumerate() {
         let processed_input = process_input(i);
-        let no_of_won_cards = get_winning_cards(processed_input.0, processed_input.1)
-            .iter()
-            .count();
+        let no_of_won_cards = get_winning_cards(processed_input.0, processed_input.1).len();
         for i in idx + 1..=idx + no_of_won_cards {
             arr[i] += arr[idx];
         }
