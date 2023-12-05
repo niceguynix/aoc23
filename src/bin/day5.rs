@@ -122,8 +122,8 @@ fn map_range(
     let mut t = Vec::new();
 
     let mut m = false;
-    let mut c = 0_u128;
-    for (i, updated) in ranges.clone() {
+    let _c = 0_u128;
+    for (i, updated) in ranges {
         m = false;
         if updated {
             t.push((i, true));
@@ -132,16 +132,12 @@ fn map_range(
         if i.start() < src.start() && i.end() > src.end() {
             m = true;
             t.push((*i.start()..=(src.start() - 1), false));
-            c += t.last().unwrap().0.clone().count() as u128;
             t.push((dest.clone(), true));
-            c += t.last().unwrap().0.clone().count() as u128;
             t.push(((*src.end() + 1)..=*i.end(), false));
-            c += t.last().unwrap().0.clone().count() as u128;
         }
 
         if i.start() == src.start() && i.end() == src.end() {
             t.push((dest.clone(), true));
-            c += t.last().unwrap().0.clone().count() as u128;
             m = true;
         }
 
@@ -150,54 +146,27 @@ fn map_range(
             let tstart = dest.start() + (i.start() - src.start());
             let tend = dest.end() - (src.end() - i.end());
             t.push((tstart..=tend, true));
-            c += t.last().unwrap().0.clone().count() as u128;
         }
 
         if src.end() < i.end() && src.start() <= i.start() && src.end() >= i.start() {
             m = true;
             let tstart = dest.start() + (i.start() - src.start());
             t.push((tstart..=*dest.end(), true));
-            c += t.last().unwrap().0.clone().count() as u128;
             t.push(((src.end() + 1)..=*i.end(), false));
-            c += t.last().unwrap().0.clone().count() as u128;
         }
 
         if src.end() >= i.end() && src.start() > i.start() && src.start() <= i.end() {
             m = true;
             let tend = dest.end() - (src.end() - i.end());
             t.push((*i.start()..=*src.start() - 1, false));
-            c += t.last().unwrap().0.clone().count() as u128;
             t.push((*dest.start()..=tend, true));
-            c += t.last().unwrap().0.clone().count() as u128;
         }
         if m.not() {
             t.push((i, false));
         }
     }
-    // println!("\n\n\nHere\n\n\n");
-    // println!("{t:?}");
-    // println!("Ayo wtf {c} {}",u64::MAX);
 
-    let x = t.clone().iter().fold(0, |p, (c, _)| {
-        let t = c.clone().count() as u128;
-        // println!("{t}");
-        p + t
-    });
-    if x != u64::MAX as u128 {
-        println!("Ayo wtf {ranges:?} {src:?} {c} {}", u64::MAX);
-        panic!();
-    }
-
-    t.iter()
-        .map(|x| {
-            if x.0.start() > x.0.end() {
-                println!("{:?}", x.0);
-                panic!("fuck");
-            }
-
-            x.clone()
-        })
-        .collect()
+    t
 }
 
 fn part2(input: &str) -> u64 {
@@ -212,16 +181,15 @@ fn part2(input: &str) -> u64 {
         .filter_map(|x| x.parse().ok())
         .collect::<Vec<u64>>();
 
-    let _seeds = soils.chunks_exact(2).flat_map(|x| {
-        println!("{x:?}");
-        x[0]..x[0] + x[1]
+    let seeds = soils.chunks_exact(2).map(|x| {
+        // println!("{x:?}");
+        x[0]..=(x[0] + x[1] - 1)
     });
 
     let mappers: Vec<_> = sections
         .map(Mapper::try_from)
         .collect::<Result<_, _>>()
         .unwrap();
-    println!("{soils:?}");
 
     // let seeds = soils.map(|x| {
     //     // let mut t = vec![x];
@@ -238,22 +206,40 @@ fn part2(input: &str) -> u64 {
 
     let mut ranges = vec![(0..=u64::MAX - 1, false)];
 
-    let mut c = 0;
+    let _c = 0;
     for i in mappers.iter() {
         for z in ranges.iter_mut() {
             z.1 = false;
         }
-        println!("hello");
-        // println!("{ranges:?}");
         for r in &i.ranges {
             ranges = map_range(ranges, r.source.clone(), r.destination.clone());
-            if c == 3 {
-                // panic!();
-            }
         }
-        c += 1;
     }
 
+    let mut mloc = u64::MAX;
+
+    let mut x = 0;
+    for i in ranges.iter() {
+        x += i.0.clone().count();
+    }
+    let mut c = 0;
+    for s in seeds {
+        let mut st = 0;
+        let mut e = 0;
+        for (r, _) in ranges.iter() {
+            e += r.clone().count() as u64;
+            c = e;
+            if &st >= s.start() && &st <= s.end() {
+                mloc = mloc.min(*r.start());
+            }
+            if &e <= s.end() && &e >= s.start() {
+                mloc = mloc.min(*r.start());
+            }
+            st = e;
+            // if s.start()
+        }
+    }
+    mloc
     // println!("{ranges:?}");
 
     // let locations = seeds
@@ -287,32 +273,33 @@ fn part2(input: &str) -> u64 {
     // });
     // println!("{ranges:?}");
 
-    let mut ranges = ranges.into_iter().flat_map(|(r, _)| r);
+    // let mut ranges = ranges.into_iter().flat_map(|(r, _)| r);
 
-    let mut soil2 = Vec::new();
-    for i in soils.chunks_exact(2) {
-        soil2.push((i[0], i[1]));
-    }
+    // let mut soil2 = Vec::new();
+    // for i in soils.chunks_exact(2) {
+    //     soil2.push((i[0], i[1]));
+    // }
 
-    soil2.sort_by_key(|x| x.0);
+    // soil2.sort_by_key(|x| x.0);
 
-    let mut c = 0;
-    let locations = soil2.iter().flat_map(|(s, l)| {
-        let mut x = vec![];
-        let t = s - c;
-        for _i in 0..t {
-            c += 1;
-            ranges.next();
-        }
+    // let mut c = 0;
+    // let locations = soil2.iter().flat_map(|(s, l)| {
+    //     let mut x = vec![];
+    //     let t = s - c;
+    //     for _i in 0..t {
+    //         c += 1;
+    //         ranges.next();
+    //     }
 
-        for _i in 0..*l {
-            c += 1;
-            x.push(ranges.next().unwrap());
-        }
+    //     for _i in 0..*l {
+    //         c += 1;
+    //         x.push(ranges.next().unwrap());
+    //     }
 
-        x
-    });
-    locations.min().unwrap()
+    //     x
+    // });
+    // locations.min().unwrap()
+
     // 0
 }
 
