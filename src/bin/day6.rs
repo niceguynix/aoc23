@@ -1,72 +1,76 @@
-use core::time;
-
-fn part1(input: &str) -> u32 {
+fn parse_times_and_distances(
+    input: &'static str,
+) -> (
+    impl Iterator<Item = &str>,
+    impl Iterator<Item = &'static str>,
+) {
     let mut lines = input.lines();
+
     let times = lines
         .next()
         .unwrap()
-        .split_once(":")
+        .split_once(':')
         .unwrap()
         .1
-        .split_ascii_whitespace()
-        .filter_map(|x| x.parse().ok())
-        .collect::<Vec<u32>>();
+        .split_ascii_whitespace();
 
     let distances = lines
         .next()
         .unwrap()
-        .split_once(":")
+        .split_once(':')
         .unwrap()
         .1
-        .split_ascii_whitespace()
-        .filter_map(|x| x.parse().ok())
-        .collect::<Vec<u32>>();
+        .split_ascii_whitespace();
 
-    let mut d = distances.iter();
+    (times, distances)
+}
+
+fn part1(input: &'static str) -> u32 {
+    let (times, distances) = parse_times_and_distances(input);
+
+    let (times, distances) = (
+        times.map(|x| x.parse().unwrap()),
+        distances.map(|x| x.parse().unwrap()),
+    );
+
     let mut m = 1;
-    for i in times {
-        let ds = d.next().unwrap();
+    for (i, ds) in times.zip(distances) {
         let mut c = 0;
-        for speed in (0..=i) {
-            if (i - speed) * speed > *ds {
+        for speed in 0..=i {
+            if (i - speed) * speed > ds {
                 c += 1;
             }
         }
-
         m *= c;
     }
 
     m
 }
 
-fn part2(input: &str) -> u32 {
-    let mut lines = input.lines();
-    let times = lines
-        .next()
-        .unwrap()
-        .split_once(":")
-        .unwrap()
-        .1
-        .split_ascii_whitespace().into_iter().collect::<String>().parse::<u64>().unwrap();
+fn part2(input: &'static str) -> u32 {
+    let (time, distance) = parse_times_and_distances(input);
 
-    let distances = lines
-        .next()
-        .unwrap()
-        .split_once(":")
-        .unwrap()
-        .1
-        .split_ascii_whitespace().into_iter().collect::<String>().parse::<u64>().unwrap();
-        
+    let (time, distance) = (
+        time.collect::<String>().parse::<u64>().unwrap(),
+        distance.collect::<String>().parse::<u64>().unwrap(),
+    );
 
-    let mut c = 0;
-    println!("{times} {distances}");
-    for speed in (0..times) {
-        if (times - speed) * speed > distances {
-            c += 1;
-        }
-    }
+    // let mut c = 0;
+    // // println!("{times} {distances}");
+    // for speed in 0..time {
+    //     if (time - speed) * speed > distance {
+    //         c += 1;
+    //     }
+    // }
+    let c= time;
+    let d=distance;
+    
+    let intersection1 = (c as f64+ f64::sqrt((c.pow(2) - 4*d) as f64))/2_f64;
+    let intersection2 = (c as f64- f64::sqrt((c.pow(2) - 4*d) as f64))/2_f64;
 
-    c
+    let c=1_f64-intersection2.ceil() + intersection1.floor();
+    println!("{intersection1} {intersection2} {c}");
+    c as u32
 }
 
 fn main() {
