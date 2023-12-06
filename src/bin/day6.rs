@@ -35,18 +35,21 @@ fn part1(input: &'static str) -> u32 {
         distances.map(|x| x.parse().unwrap()),
     );
 
-    let mut m = 1;
-    for (i, ds) in times.zip(distances) {
-        let mut c = 0;
-        for speed in 0..=i {
-            if (i - speed) * speed > ds {
-                c += 1;
-            }
-        }
-        m *= c;
-    }
+    // let before = Instant::now();
+    times
+        .zip(distances)
+        .map(|(time, distance): (u32, u32)| {
+            (0..time)
+                .filter_map(|speed| match (time - speed) * speed > distance {
+                    true => Some(1),
+                    false => None,
+                })
+                .count()
+        })
+        .product::<usize>() as u32
 
-    m
+    // println!("{:?}", before.elapsed());
+
 }
 
 fn part2(input: &'static str) -> u32 {
@@ -57,13 +60,13 @@ fn part2(input: &'static str) -> u32 {
         distance.collect::<String>().parse::<u64>().unwrap(),
     );
 
-    let c= time;
-    let d=distance;
+    let c = time;
+    let d = distance;
 
-    let intersection1 = (c as f64+ f64::sqrt((c.pow(2) - 4*d) as f64))/2_f64;
-    let intersection2 = (c as f64- f64::sqrt((c.pow(2) - 4*d) as f64))/2_f64;
+    let intersection1 = (c as f64 + f64::sqrt((c.pow(2) - 4 * d) as f64)) / 2_f64;
+    let intersection2 = (c as f64 - f64::sqrt((c.pow(2) - 4 * d) as f64)) / 2_f64;
 
-    let c=1_f64-intersection2.ceil() + intersection1.floor();
+    let c = 1_f64 - intersection2.ceil() + intersection1.floor();
 
     c as u32
 }
