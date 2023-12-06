@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 fn parse_times_and_distances(
     input: &'static str,
 ) -> (
@@ -55,21 +57,14 @@ fn part2(input: &'static str) -> u32 {
         distance.collect::<String>().parse::<u64>().unwrap(),
     );
 
-    // let mut c = 0;
-    // // println!("{times} {distances}");
-    // for speed in 0..time {
-    //     if (time - speed) * speed > distance {
-    //         c += 1;
-    //     }
-    // }
     let c= time;
     let d=distance;
-    
+
     let intersection1 = (c as f64+ f64::sqrt((c.pow(2) - 4*d) as f64))/2_f64;
     let intersection2 = (c as f64- f64::sqrt((c.pow(2) - 4*d) as f64))/2_f64;
 
     let c=1_f64-intersection2.ceil() + intersection1.floor();
-    println!("{intersection1} {intersection2} {c}");
+
     c as u32
 }
 
