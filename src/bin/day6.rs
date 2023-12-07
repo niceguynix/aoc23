@@ -49,7 +49,6 @@ fn part1(input: &'static str) -> u32 {
         .product::<usize>() as u32
 
     // println!("{:?}", before.elapsed());
-
 }
 
 fn part2(input: &'static str) -> u32 {
