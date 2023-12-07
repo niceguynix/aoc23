@@ -1,6 +1,6 @@
 use std::{
     cmp::Ordering,
-    collections::{HashMap, HashSet},
+    collections::{HashMap},
     str::FromStr,
 };
 
@@ -57,65 +57,64 @@ struct PlayerCard {
     bid: u32,
 }
 
-impl PlayerCard{
-    fn get_best_card(self)->Hand{
+impl PlayerCard {
+    fn get_best_card(self) -> Hand {
         let mut hash = HashMap::new();
 
         for i in &self.cards {
-            if let Some(c) = hash.get(i) {
-                hash.entry(i).and_modify(|x| *x = *x + 1);
+            if let Some(_c) = hash.get(i) {
+                hash.entry(i).and_modify(|x| *x += 1);
             } else {
                 hash.insert(i, 1);
             }
         }
 
-        let mut b=hash.get(&Card::J);
-        let no_of_joker=b.get_or_insert(&0);
+        let mut b = hash.get(&Card::J);
+        let no_of_joker = b.get_or_insert(&0);
 
-        if **no_of_joker==5 || **no_of_joker==4{
+        if **no_of_joker == 5 || **no_of_joker == 4 {
             return Hand::FiveOfKind(self);
         }
 
-        if **no_of_joker==3{
-            if hash.keys().count()==2{
+        if **no_of_joker == 3 {
+            if hash.keys().count() == 2 {
                 return Hand::FiveOfKind(self);
-            }else {
+            } else {
                 return Hand::FourOfKind(self);
             }
         }
 
-        if **no_of_joker==2 {
+        if **no_of_joker == 2 {
             let t = hash.keys().count();
 
-            if t==2{
+            if t == 2 {
                 return Hand::FiveOfKind(self);
-            }else if t==3{
-               return  Hand::FourOfKind(self);
-            }else if t==4{
+            } else if t == 3 {
+                return Hand::FourOfKind(self);
+            } else if t == 4 {
                 return Hand::ThreeOfKind(self);
             }
         }
 
-        if **no_of_joker==1{
+        if **no_of_joker == 1 {
             let t = hash.keys().count();
-            let max=hash.values().max().unwrap();
-            if t==2{
+            let max = hash.values().max().unwrap();
+            if t == 2 {
                 return Hand::FiveOfKind(self);
-            }else if t==3{
-                if *max==3{
-                    return  Hand::FourOfKind(self);
-                }else{
-                    return Hand::FullHouse(self)
+            } else if t == 3 {
+                if *max == 3 {
+                    return Hand::FourOfKind(self);
+                } else {
+                    return Hand::FullHouse(self);
                 }
-            }else if t==4{
+            } else if t == 4 {
                 return Hand::ThreeOfKind(self);
-            }else{
-                return Hand::OnePair(self)
+            } else {
+                return Hand::OnePair(self);
             }
         }
 
         self.into()
-
     }
 }
 
@@ -137,7 +136,7 @@ impl FromStr for PlayerCard {
     type Err = std::io::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (card, bid) = s.split_once(" ").unwrap();
+        let (card, bid) = s.split_once(' ').unwrap();
         let mut chars = card.chars();
         let c1 = chars.next().unwrap().try_into()?;
         let c2 = chars.next().unwrap().try_into()?;
@@ -191,8 +190,8 @@ impl From<PlayerCard> for Hand {
         let mut hash = HashMap::new();
 
         for i in &value.cards {
-            if let Some(c) = hash.get(i) {
-                hash.entry(i).and_modify(|x| *x = *x + 1);
+            if let Some(_c) = hash.get(i) {
+                hash.entry(i).and_modify(|x| *x += 1);
             } else {
                 hash.insert(i, 1);
             }
@@ -217,18 +216,18 @@ impl From<PlayerCard> for Hand {
         let no_not_two = hash.values().filter(|x| **x != 2).count();
         if *m == 2 {
             if no_not_two == 1 {
-                return Self::TwoPair(value);
+                Self::TwoPair(value)
             } else {
-                return Self::OnePair(value);
+                Self::OnePair(value)
             }
         } else {
-            return Self::HighCard(value);
+            Self::HighCard(value)
         }
     }
 }
 
 fn part1(input: &'static str) -> u32 {
-    let mut playercards = input
+    let playercards = input
         .lines()
         .map(|x| x.parse::<PlayerCard>().unwrap())
         .collect::<Vec<_>>();
@@ -240,10 +239,10 @@ fn part1(input: &'static str) -> u32 {
         .map(|x| x.into())
         .collect::<Vec<Hand>>();
 
-    hands.sort_by(|a, b| a.cmp(b));
+    hands.sort();
 
-    let t1 = 0;
-    let t2 = 1;
+    let _t1 = 0;
+    let _t2 = 1;
     // let test=hands[t1].cmp(&hands[t2]);
 
     // println!("In main function {:?} {:?} {:?}",hands[t1],hands[t2],test);
@@ -255,14 +254,19 @@ fn part1(input: &'static str) -> u32 {
         .sum::<u32>()
 }
 
+fn part2(input: &str) -> u32 {
+    let mut hands = input
+        .lines()
+        .map(|x| PlayerCard::get_best_card(x.parse().unwrap()))
+        .collect::<Vec<_>>();
 
-fn part2(input:&str)->u32{
-    let mut hands=input.lines().map(|x| PlayerCard::get_best_card(x.parse().unwrap())).collect::<Vec<_>>();
+    hands.sort();
 
-    hands.sort_by(|a,b| a.cmp(b));
-
-    hands.into_iter().enumerate().map(|(idx,h)| (idx as u32+1)*get_data(&h).bid ).sum()
-
+    hands
+        .into_iter()
+        .enumerate()
+        .map(|(idx, h)| (idx as u32 + 1) * get_data(&h).bid)
+        .sum()
 }
 
 fn main() {
@@ -295,9 +299,6 @@ mod tests {
 
     #[test]
     fn day7_part2() {
-        assert_eq!(
-            part2(include_str!("../inputs/day7/part1_sample.txt")),
-            5905
-        )
+        assert_eq!(part2(include_str!("../inputs/day7/part1_sample.txt")), 5905)
     }
 }
