@@ -1,5 +1,3 @@
-
-
 fn parse_times_and_distances(
     input: &'static str,
 ) -> (

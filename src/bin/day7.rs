@@ -1,8 +1,4 @@
-use std::{
-    cmp::Ordering,
-    collections::{HashMap},
-    str::FromStr,
-};
+use std::{cmp::Ordering, collections::HashMap, str::FromStr};
 
 #[derive(Debug, Hash, Eq, PartialEq, PartialOrd, Ord)]
 enum Card {
