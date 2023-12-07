@@ -6,6 +6,7 @@ use std::{
 
 #[derive(Debug, Hash, Eq, PartialEq, PartialOrd, Ord)]
 enum Card {
+    J,
     N2,
     N3,
     N4,
@@ -15,7 +16,6 @@ enum Card {
     N8,
     N9,
     T,
-    J,
     Q,
     K,
     A,
@@ -55,6 +55,68 @@ impl TryFrom<char> for Card {
 struct PlayerCard {
     cards: [Card; 5],
     bid: u32,
+}
+
+impl PlayerCard{
+    fn get_best_card(self)->Hand{
+        let mut hash = HashMap::new();
+
+        for i in &self.cards {
+            if let Some(c) = hash.get(i) {
+                hash.entry(i).and_modify(|x| *x = *x + 1);
+            } else {
+                hash.insert(i, 1);
+            }
+        }
+
+        let mut b=hash.get(&Card::J);
+        let no_of_joker=b.get_or_insert(&0);
+
+        if **no_of_joker==5 || **no_of_joker==4{
+            return Hand::FiveOfKind(self);
+        }
+
+        if **no_of_joker==3{
+            if hash.keys().count()==2{
+                return Hand::FiveOfKind(self);
+            }else {
+                return Hand::FourOfKind(self);
+            }
+        }
+
+        if **no_of_joker==2 {
+            let t = hash.keys().count();
+
+            if t==2{
+                return Hand::FiveOfKind(self);
+            }else if t==3{
+               return  Hand::FourOfKind(self);
+            }else if t==4{
+                return Hand::ThreeOfKind(self);
+            }
+        }
+
+        if **no_of_joker==1{
+            let t = hash.keys().count();
+            let max=hash.values().max().unwrap();
+            if t==2{
+                return Hand::FiveOfKind(self);
+            }else if t==3{
+                if *max==3{
+                    return  Hand::FourOfKind(self);
+                }else{
+                    return Hand::FullHouse(self)
+                }
+            }else if t==4{
+                return Hand::ThreeOfKind(self);
+            }else{
+                return Hand::OnePair(self)
+            }
+        }
+
+        self.into()
+
+    }
 }
 
 impl Ord for PlayerCard {
@@ -193,6 +255,16 @@ fn part1(input: &'static str) -> u32 {
         .sum::<u32>()
 }
 
+
+fn part2(input:&str)->u32{
+    let mut hands=input.lines().map(|x| PlayerCard::get_best_card(x.parse().unwrap())).collect::<Vec<_>>();
+
+    hands.sort_by(|a,b| a.cmp(b));
+
+    hands.into_iter().enumerate().map(|(idx,h)| (idx as u32+1)*get_data(&h).bid ).sum()
+
+}
+
 fn main() {
     let args = std::env::args().collect::<Vec<_>>();
     let part = args.get(1);
@@ -205,7 +277,7 @@ fn main() {
     let before = std::time::Instant::now();
     let result = match part.as_str() {
         "part1" => part1(input),
-        // "part2" => part2(input),
+        "part2" => part2(input),
         _ => panic!("Specify one of 2 parts {part}"),
     };
 
@@ -221,11 +293,11 @@ mod tests {
         assert_eq!(part1(include_str!("../inputs/day7/part1_sample.txt")), 6440)
     }
 
-    // #[test]
-    // fn day7_part2() {
-    //     assert_eq!(
-    //         part2(include_str!("../inputs/day7/part1_sample.txt")),
-    //         71503
-    //     )
-    // }
+    #[test]
+    fn day7_part2() {
+        assert_eq!(
+            part2(include_str!("../inputs/day7/part1_sample.txt")),
+            5905
+        )
+    }
 }
