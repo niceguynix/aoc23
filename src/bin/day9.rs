@@ -1,7 +1,6 @@
+use std::iter::Map;
 
-use std::collections::binary_heap::Iter;
 
-use itertools::Itertools;
 
 fn solve_seq(nums:&[i128])->i128{
     if nums.iter().all(|x| x==&0){
@@ -17,28 +16,32 @@ fn solve_seq(nums:&[i128])->i128{
 struct TupleWindows<'a,T>
 where T:Clone
 {
-    iterator:&'a mut dyn Iterator<Item = T>,
+    iterator:Box<&'a mut dyn Peekable<Item = T>>,
     prev:Option<T>,
+    peek:Option<(T,T)>
 }
 
 impl<T> Iterator for TupleWindows<'_,T>
-where T:Clone+Clone
+where T:Clone+Clone+std::fmt::Debug
 {
     type Item = (T,T);
 
     fn next(&mut self) -> Option<Self::Item> {
         let t=self.iterator.next();
-        let t=self.iterator.next();
 
+//    println!("{t}"); 
         if let Some(v)=t{
             if let Some(v2)=self.prev.clone(){
                     self.prev=Some(v.clone());
                 return Some((v2.clone(),v));
             }else{
-              let x=self.iterator.next().unwrap();
-              let x2=self.iterator.next().unwrap();
-              self.prev=Some(x2.clone());  
-              return Some((x,x2))
+              if let Some(x)=self.iterator.next(){
+                  self.prev=Some(x.clone());  
+                  return Some((v,x))
+              }else{
+                return None
+
+              }
             }
         }
 
@@ -47,19 +50,85 @@ where T:Clone+Clone
     }
 }
 
+trait Peekable:Iterator{
+    fn peek(&mut self)->Option<Self::Item>;
+
+}
+
+struct PeekableMap<I,T>
+where I:Iterator
+{
+    iterator:I,
+    peek:Option<T>
+}
+
+impl<I,T> Iterator for PeekableMap<I,T>
+where I:Iterator<Item = T>,T:Copy
+{
+     type Item = T;
+     fn next(&mut self) -> Option<Self::Item> {
+        if let Some(x)=self.peek{
+            self.peek=None;
+            return Some(x);
+        }else{
+            self.iterator.next()
+        }
+     }
+}
+
+
+impl<I,T> Peekable for PeekableMap<I,T>
+where I:Iterator<Item = T>,T:Copy
+{
+    fn peek(&mut self)->Option<Self::Item> {
+        match self.peek.clone(){
+            None=>{
+                self.peek=self.iterator.next();
+                self.peek
+            },
+            Some(x)=>{
+                self.peek=None;
+                Some(x)
+            }
+        }
+    } 
+}
+
+impl<'a,I,T> PeekableMap<I,T>
+where I:Iterator<Item = T>,T:Copy
+{
+    fn new(iterator:I)->Self{
+        Self { iterator, peek: None }
+    }
+
+    fn into_peekable(&'a mut self)->Box<&'a mut dyn Peekable<Item =T >>{
+      Box::new(self) 
+    }
+
+}
+
 impl<'a,T:Clone> TupleWindows<'a,T>{
 
-    fn new( it:&'a mut impl Iterator<Item=T>)->Self{
-        TupleWindows { iterator:it , prev: None }
+    fn new( it:Box<&'a mut dyn Peekable<Item=T>>)->Self{
+        TupleWindows { iterator:it , prev: None,peek:None }
     }
 }
 
-fn test_solver(mut nums:&mut impl Iterator<Item=i128>)->i128{
-    
-    match nums.next(){
+fn test_solver(mut nums:Box< (&mut dyn Peekable<Item = i128>)>)->i128{
+    match nums.peek(){
         Some(ele)=>{
-            let mut test = TupleWindows::new(&mut nums);
-            ele+test_solver(&mut test.map(|x| x.1-x.0).into_iter())
+            // println!("{ele}");
+            let test=TupleWindows::new(nums);
+            let x =&mut test.map(|x| {
+                // println!("{x:?}");
+                x.0-x.1
+            }).into_iter();
+
+            let mut y=x.peekable();
+            let mut a=PeekableMap::new(x);
+            let c=a.into_peekable();
+
+            ele+test_solver(c)
         },
         None=>0
     }
@@ -69,10 +138,24 @@ fn parse_input(input:&'static str)->impl Iterator<Item = impl Iterator<Item=i128
     input.lines().map(|x| x.split_ascii_whitespace().map(|x| x.parse().unwrap()))
 }
 
+fn test(mut nums:Vec<i128>){
+    println!("{nums:?}");
+    let mut t =nums.iter();
+    // let x = TupleWindows::new(&mut t); 
+
+    // for i in x{
+        // println!("{i:?}");
+    // }
+}
+
 fn part1(input:&'static str)->i128{
     parse_input(input).map(|x|{
         let t=x.collect::<Vec<_>>();
-        test_solver(&mut t.into_iter())
+        // test(t);
+        // 0
+        let z=t.into_iter().rev();
+        let mut c=PeekableMap::new(z);
+        test_solver(c.into_peekable())
     }).sum()
 }
 
