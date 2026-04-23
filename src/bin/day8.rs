@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Debug, ops::Not, time::Instant};
 
 fn gcd(a: u128, b: u128) -> u128 {
     if b == 0 {
@@ -24,11 +24,11 @@ fn part1(input: &str) -> u64 {
 
     lines
         .map(|x| {
-            let (t1, t2) = x.split_once('=').unwrap();
+            let (t1, t2) = x.split_once("=").unwrap();
             let t1 = t1.trim();
 
             let x = &t2.trim()[1..t2.len() - 2];
-            let (t2, t3) = x.split_once(',').unwrap();
+            let (t2, t3) = x.split_once(",").unwrap();
 
             (t1.trim(), t2.trim(), t3.trim())
         })
@@ -63,11 +63,11 @@ fn part2(input: &str) -> u64 {
     let mut hash = HashMap::new();
 
     for i in lines {
-        let (t1, t2) = i.split_once('=').unwrap();
+        let (t1, t2) = i.split_once("=").unwrap();
         let t1 = t1.trim();
 
         let x = &t2.trim()[1..t2.len() - 2];
-        let (t2, t3) = x.split_once(',').unwrap();
+        let (t2, t3) = x.split_once(",").unwrap();
 
         hash.insert(t1, (t2, t3.trim()));
     }
@@ -75,7 +75,7 @@ fn part2(input: &str) -> u64 {
     let cur = hash
         .keys()
         .filter(|x| x.ends_with('A'))
-        .copied()
+        .map(|x| *x)
         .collect::<Vec<_>>();
 
     let t = cur.into_iter().map(|i| {
@@ -86,7 +86,7 @@ fn part2(input: &str) -> u64 {
             .enumerate()
             .flat_map(|(idx, a)| {
                 let v = hash.get(i).unwrap();
-                match (i.ends_with('Z'), a) {
+                match (i.ends_with("Z"), a) {
                     (false, 'L') => i = v.0,
                     (false, 'R') => i = v.1,
                     (true, _) => {
@@ -102,7 +102,7 @@ fn part2(input: &str) -> u64 {
         // println!("{x}");
     });
 
-    let x: u128 = t.reduce(lcm).unwrap();
+    let x: u128 = t.reduce(|a, b| lcm(a, b)).unwrap();
 
     x as u64
 }

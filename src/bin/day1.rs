@@ -49,6 +49,7 @@ fn part2(input: &str) -> u32 {
 }
 
 fn main() {
+    let interface = std::env::vars();
     let args = std::env::args().collect::<Vec<_>>();
     let part = args.get(2);
     let part = match part {
